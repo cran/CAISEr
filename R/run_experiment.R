@@ -3,7 +3,7 @@
 #' Design and run a full experiment - calculate the required number of
 #' instances, run the algorithms on each problem instance using the iterative
 #' approach based on optimal sample size ratios, and return the results of the
-#' experiment. This routing builds upon [calc_instances()] and [calc_nreps2()],
+#' experiment. This routine builds upon [calc_instances()] and [calc_nreps2()],
 #' so refer to the documentation of these two functions for details.
 #'
 #' @section Instance List:
@@ -68,7 +68,7 @@
 #' In the _general case_ the initial number of observations / algorithm /
 #' instance (`nstart`) should be relatively high. For the parametric case
 #' we recommend ~15 if outliers are not expected, ~50 (at least) if that
-#' assumption cannot be made. For the bootstrap approch we recommend using at
+#' assumption cannot be made. For the bootstrap approach we recommend using at
 #' least 15 or 20. However, if some distributional assumptions can be
 #' made - particularly low skewness of the population of algorithm results on
 #' the test instances), then `nstart` can in principle be as small as 5 (if the
@@ -100,6 +100,8 @@
 #' @param Algorithm.list list object containing the definitions of the
 #'    algorithms to be compared. See [calc_nreps2()] for details.
 #' @param power (desired) test power. See [calc_instances()] for details.
+#'    Any value equal to or greater than one will force the method to use all
+#'    available instances in `Instance.list`.
 #' @param d minimally relevant effect size (MRES), expressed as a standardized
 #'        effect size, i.e., "deviation from H0" / "standard deviation".
 #'        See [calc_instances()] for details.
@@ -126,6 +128,9 @@
 #' @param boot.R number of bootstrap resamples. See [calc_nreps2()] for details.
 #' @param force.balanced logical flag to force the use of balanced sampling for
 #'        the algorithms on each instance
+#' @param ncpus number of cores to use
+#' @param save.partial.results logical flag: should individual instance results
+#'        be saved to file?
 #'
 #' @return a list object containing the full input configuration plus the
 #' following fields:
@@ -184,7 +189,8 @@
 #'                              se.max = 0.05,
 #'                              dif = "perc",
 #'                              nmax   = 200,
-#'                              seed   = 1234)
+#'                              seed   = 1234,
+#'                              ncpus  = 1)
 #'
 #' # Take a look at the summary table
 #' my.results$data.summary
@@ -212,8 +218,9 @@ run_experiment <- function(Instance.list,    # instance parameters
                            nmax   = 1000,    # maximum allowed sample size
                            seed   = NULL,    # seed for PRNG
                            boot.R = 999,     # number of bootstrap resamples
-                           force.balanced = FALSE) # force balanced sampling
-                           #ncpus  = 1)       # number of cores to use
+                           force.balanced = FALSE, # force balanced sampling
+                           ncpus  = 1,       # number of cores to use
+                           save.partial.results = FALSE) # save tmp files?
 {
 
   # ========== Error catching to be performed by specific routines ========== #
@@ -229,22 +236,22 @@ run_experiment <- function(Instance.list,    # instance parameters
   }
 
 
-  # # Set up doParallel    #//DoParallel
-  # available.cores <- parallel::detectCores()
-  # if (ncpus >= available.cores){
-  #   cat("\n Warning: ncpus too large, we only have ", available.cores,
-  #       " cores. Using ", available.cores - 1, " cores for run_experiment().")
-  #   ncpus <- available.cores - 1
-  # }
-  # cl.CAISEr <- parallel::makeCluster(ncpus)
-  # doParallel::registerDoParallel(cl.CAISEr)
-
-  # Fill up algorithm and instance aliases if needed
-  for (i in 1:length(Algorithm.list)){
-    if (!("alias" %in% names(Algorithm.list[[i]]))) {
-      Algorithm.list[[i]]$alias <- Algorithm.list[[i]]$FUN
+  # Set up parallel processing
+  if ((.Platform$OS.type == "windows") & (ncpus > 1)){
+    cat("\nAttention: multicore not available for Windows.\n
+        Forcing ncpus = 1.")
+    ncpus <- 1
+  } else {
+    available.cores <- parallel::detectCores()
+    if (ncpus >= available.cores){
+      cat("\nAttention: ncpus too large, we only have ", available.cores,
+          " cores.\nUsing ", available.cores - 1,
+          " cores for run_experiment().")
+      ncpus <- available.cores - 1
     }
   }
+
+  # Fill up algorithm and instance aliases if needed
   for (i in 1:length(Instance.list)){
     if (!("alias" %in% names(Instance.list[[i]]))) {
       Instance.list[[i]]$alias <- Instance.list[[i]]$FUN
@@ -252,16 +259,21 @@ run_experiment <- function(Instance.list,    # instance parameters
   }
 
   # Calculate N*
-  ninstances <- calc_instances(power       = power,
-                               d           = d,
-                               sig.level   = sig.level,
-                               alternative = alternative,
-                               test.type   = test.type)
-  N.star     <- ninstances$ninstances
+  n.available <- length(Instance.list)
 
-  # Randomize order of presentation for available instances
-  n.available   <- length(Instance.list)
-  Instance.list <- Instance.list[sample.int(n.available)]
+  if (power >= 1) {
+    N.star <- n.available
+  } else {
+    ninstances <- calc_instances(power       = power,
+                                 d           = d,
+                                 sig.level   = sig.level,
+                                 alternative = alternative,
+                                 test.type   = test.type)
+    N.star <- ninstances$ninstances
+
+    # Randomize order of presentation for available instances
+    Instance.list <- Instance.list[sample.int(n.available)]
+  }
 
   # Echo some information for the user
   cat("CAISEr running")
@@ -280,53 +292,63 @@ run_experiment <- function(Instance.list,    # instance parameters
                              n1j      = numeric(0),
                              n2j      = numeric(0))
 
+  # Sample instances
+  my.results <- pbmcapply::pbmclapply(X = Instance.list[1:min(N.star,
+                                                              n.available)],
+                                      FUN            = calc_nreps2,
+                                      algorithm1     = Algorithm.list[[1]],
+                                      algorithm2     = Algorithm.list[[2]],
+                                      se.max         = se.max,
+                                      dif            = dif,
+                                      method         = method,
+                                      nstart         = nstart,
+                                      nmax           = nmax,
+                                      boot.R         = boot.R,
+                                      force.balanced = force.balanced,
+                                      save.to.file   = save.partial.results,
+                                      mc.cores       = ncpus,
+                                      mc.preschedule = FALSE)
 
-  for (i in 1:min(N.star, n.available)){
-    instance <- Instance.list[[i]]
-    # Echo some information for the user
-    cat("\nSampling algorithms on instance:", instance$alias)
+  # Consolidate raw data
+  data.raw <- lapply(X   = seq(length(my.results)),
+                     FUN = function(j, my.results, alias1, alias2, inst.list){
+                       res_j <- my.results[[j]]
+                       inst  <- inst.list[[j]]$alias
+                       nj    <- res_j$n1j + res_j$n2j
+                       data.frame(Algorithm   = c(rep(alias1, res_j$n1j),
+                                                  rep(alias2, res_j$n2j)),
+                                  Instance    = rep(inst, nj),
+                                  Observation = c(res_j$x1j, res_j$x2j),
+                                  stringsAsFactors = FALSE)},
+                     my.results = my.results,
+                     alias1     = Algorithm.list[[1]]$alias,
+                     alias2     = Algorithm.list[[2]]$alias,
+                     inst.list  = Instance.list)
 
-    # Sample the algorithms on this instance
-    res_j <- calc_nreps2(instance = instance,
-                         algorithm1 = Algorithm.list[[1]],
-                         algorithm2 = Algorithm.list[[2]],
-                         se.max = se.max, dif = dif, method = method,
-                         nstart = nstart, nmax = nmax, boot.R = boot.R,
-                         force.balanced = force.balanced)
-                         # ncpus = ncpus) #//DoParallel
+  data.raw <- do.call(rbind, data.raw)
 
-    # Update result dataframes
-    nj    <- res_j$n1j + res_j$n2j
-    raw_j <- data.frame(Algorithm = c(rep(Algorithm.list[[1]]$alias, res_j$n1j),
-                                     rep(Algorithm.list[[2]]$alias, res_j$n2j)),
-                        Instance    = rep(instance$alias, nj),
-                        Observation = c(res_j$x1j, res_j$x2j),
-                        stringsAsFactors = FALSE)
-    data.raw <- rbind(data.raw, raw_j)
+  # Consolidate summary data
+  data.summary <- lapply(X   = seq(length(my.results)),
+                         FUN = function(j, my.results, inst.list){
+                           data.frame(Instance = inst.list[[j]]$alias,
+                                      phi.j    = my.results[[j]]$phi.est,
+                                      std.err  = my.results[[j]]$se,
+                                      n1j      = my.results[[j]]$n1j,
+                                      n2j      = my.results[[j]]$n2j,
+                                      stringsAsFactors = FALSE)},
+                         my.results = my.results,
+                         inst.list  = Instance.list)
 
-    sum_j <- data.frame(Instance = instance$alias,
-                        phi.j    = res_j$phi.est,
-                        std.err  = res_j$se,
-                        n1j      = res_j$n1j,
-                        n2j      = res_j$n2j,
-                        stringsAsFactors = FALSE)
-
-    data.summary <- rbind(data.summary, sum_j)
-
-    cat("\tn1j =", res_j$n1j, ";\tn2j =", res_j$n2j)
-  }
-
-  # unregister parallel cluster   #//DoParallel
-  # stopCluster(cl.CAISEr)
+  data.summary <- do.call(rbind, data.summary)
 
   # Assemble output
-  output <- list(Configuration = var.input.pars,
-                 data.raw = data.raw,
-                 data.summary = data.summary,
-                 N = min(N.star, n.available),
-                 N.star = N.star,
+  output <- list(Configuration     = var.input.pars,
+                 data.raw          = data.raw,
+                 data.summary      = data.summary,
+                 N                 = min(N.star, n.available),
+                 N.star            = N.star,
                  instances.sampled = unique(data.summary$Instance),
-                 Underpowered = (N.star > n.available))
+                 Underpowered      = (N.star > n.available))
 
   class(output) <- c("CAISEr", "list")
 

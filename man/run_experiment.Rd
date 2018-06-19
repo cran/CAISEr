@@ -7,7 +7,8 @@
 run_experiment(Instance.list, Algorithm.list, power, d, sig.level = 0.05,
   alternative = "two.sided", test.type = "t.test", se.max, dif,
   method = "param", nstart = 20, nmax = 1000, seed = NULL,
-  boot.R = 999, force.balanced = FALSE)
+  boot.R = 999, force.balanced = FALSE, ncpus = 1,
+  save.partial.results = FALSE)
 }
 \arguments{
 \item{Instance.list}{list object containing the definitions of the
@@ -19,7 +20,9 @@ instance, see \code{\link[=calc_nreps2]{calc_nreps2()}}.}
 \item{Algorithm.list}{list object containing the definitions of the
 algorithms to be compared. See \code{\link[=calc_nreps2]{calc_nreps2()}} for details.}
 
-\item{power}{(desired) test power. See \code{\link[=calc_instances]{calc_instances()}} for details.}
+\item{power}{(desired) test power. See \code{\link[=calc_instances]{calc_instances()}} for details.
+Any value equal to or greater than one will force the method to use all
+available instances in \code{Instance.list}.}
 
 \item{d}{minimally relevant effect size (MRES), expressed as a standardized
 effect size, i.e., "deviation from H0" / "standard deviation".
@@ -58,6 +61,11 @@ See \code{\link[=calc_nreps2]{calc_nreps2()}} for details.}
 
 \item{force.balanced}{logical flag to force the use of balanced sampling for
 the algorithms on each instance}
+
+\item{ncpus}{number of cores to use}
+
+\item{save.partial.results}{logical flag: should individual instance results
+be saved to file?}
 }
 \value{
 a list object containing the full input configuration plus the
@@ -75,7 +83,7 @@ following fields:
 Design and run a full experiment - calculate the required number of
 instances, run the algorithms on each problem instance using the iterative
 approach based on optimal sample size ratios, and return the results of the
-experiment. This routing builds upon \code{\link[=calc_instances]{calc_instances()}} and \code{\link[=calc_nreps2]{calc_nreps2()}},
+experiment. This routine builds upon \code{\link[=calc_instances]{calc_instances()}} and \code{\link[=calc_nreps2]{calc_nreps2()}},
 so refer to the documentation of these two functions for details.
 }
 \section{Instance List}{
@@ -145,7 +153,7 @@ run, in a field named \code{value} (e.g., \code{result$value}) .
 In the \emph{general case} the initial number of observations / algorithm /
 instance (\code{nstart}) should be relatively high. For the parametric case
 we recommend ~15 if outliers are not expected, ~50 (at least) if that
-assumption cannot be made. For the bootstrap approch we recommend using at
+assumption cannot be made. For the bootstrap approach we recommend using at
 least 15 or 20. However, if some distributional assumptions can be
 made - particularly low skewness of the population of algorithm results on
 the test instances), then \code{nstart} can in principle be as small as 5 (if the
@@ -201,7 +209,8 @@ my.results <- run_experiment(Instance.list = instlist,
                              se.max = 0.05,
                              dif = "perc",
                              nmax   = 200,
-                             seed   = 1234)
+                             seed   = 1234,
+                             ncpus  = 1)
 
 # Take a look at the summary table
 my.results$data.summary
