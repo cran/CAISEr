@@ -42,7 +42,7 @@
 #' That is, it must be able to run if called as:
 #'
 #'    \preformatted{
-#'          # remove '$FUN' field from list of arguments
+#'          # remove '$FUN' and '$alias' field from list of arguments
 #'          # and include the problem definition as field 'instance'
 #'          myargs          <- algorithm[names(algorithm) != "FUN"]
 #'          myargs          <- myargs[names(myargs) != "alias"]
@@ -101,6 +101,7 @@
 #'        the algorithms on each instance
 #' @param save.to.file logical flag: should the results be saved to a file
 #'        in the current working directory?
+#' @param folder directory to save files (if save.to.file == TRUE)
 #'
 #'
 #' @return a list object containing the following items:
@@ -211,7 +212,8 @@ calc_nreps2 <- function(instance,         # instance parameters
                         seed   = NULL,    # seed for PRNG
                         boot.R = 999,     # number of bootstrap resamples
                         force.balanced = FALSE, # force balanced sampling
-                        save.to.file  = FALSE) # save results to tmp file
+                        save.to.file  = FALSE, # save results to tmp file
+                        folder = "./nreps_files") # directory to save files (if save.to.file == TRUE)
 {
 
   # ========== Error catching ========== #
@@ -239,6 +241,11 @@ calc_nreps2 <- function(instance,         # instance parameters
     seed <- .Random.seed #i.e., do not change anything
   } else{
     set.seed(seed)
+  }
+
+  # Get/set instance alias
+  if (!("alias" %in% names(instance))) {
+    instance$alias <- instance$FUN
   }
 
   # Echo some information for the user
@@ -282,28 +289,25 @@ calc_nreps2 <- function(instance,         # instance parameters
   }
 
   # Assemble output list
-  output <- list(x1j     = x1j,
-                 x2j     = x2j,
-                 phi.est = SE$x.est,
-                 se      = SE$se,
-                 n1j     = n1j,
-                 n2j     = n2j,
-                 seed    = seed,
-                 dif     = dif)
+  output <- list(instance = instance$alias,
+                 x1j      = x1j,
+                 x2j      = x2j,
+                 phi.est  = SE$x.est,
+                 se       = SE$se,
+                 n1j      = n1j,
+                 n2j      = n2j,
+                 seed     = seed,
+                 dif      = dif)
 
   # Save to file if required
   if (save.to.file){
     # Get folder
-    if(!dir.exists("./nreps_files")) dir.create("./nreps_files")
+    if(!dir.exists(folder)) dir.create(folder)
 
     # Get a unique filename
-    filename <- paste0("./nreps_files/nreps_file_",
-                       gsub(":", "-", as.character(Sys.time())),
-                       "_",
-                       paste(sample(c(letters, LETTERS), size = 10),
-                             collapse = ""),
+    filename <- paste0(folder, "/",
+                       instance$alias,
                        ".rds")
-    filename <- gsub(" ", "-", filename)
 
     # save output to file
     saveRDS(output, file = filename)

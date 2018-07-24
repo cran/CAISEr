@@ -1,6 +1,3 @@
-## CAISEr package
-***
-
 ## CAISEr: Comparing Algorithms with Iterative Sample-size Estimation in R
 Felipe Campelo ([fcampelo@ufmg.br](mailto:fcampelo@ufmg.br)) and Fernanda Takahashi ([fernandact@ufmg.br](mailto:fernandact@ufmg.br))  
 Operations Research and Complex Systems Laboratory - ORCS Lab  

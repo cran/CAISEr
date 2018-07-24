@@ -131,6 +131,7 @@
 #' @param ncpus number of cores to use
 #' @param save.partial.results logical flag: should individual instance results
 #'        be saved to file?
+#' @param folder directory to save files (if save.to.file == TRUE)
 #'
 #' @return a list object containing the full input configuration plus the
 #' following fields:
@@ -220,7 +221,8 @@ run_experiment <- function(Instance.list,    # instance parameters
                            boot.R = 999,     # number of bootstrap resamples
                            force.balanced = FALSE, # force balanced sampling
                            ncpus  = 1,       # number of cores to use
-                           save.partial.results = FALSE) # save tmp files?
+                           save.partial.results = FALSE, # save tmp files?
+                           folder = "./nreps_files") # folder to save files (if save.partial.results == TRUE)
 {
 
   # ========== Error catching to be performed by specific routines ========== #
@@ -230,6 +232,7 @@ run_experiment <- function(Instance.list,    # instance parameters
 
   # set PRNG seed
   if (is.null(seed)) {
+    if (!exists(".Random.seed")) stats::runif(1)
     seed <- .Random.seed #i.e., do not change anything
   } else {
     set.seed(seed)
@@ -255,6 +258,11 @@ run_experiment <- function(Instance.list,    # instance parameters
   for (i in 1:length(Instance.list)){
     if (!("alias" %in% names(Instance.list[[i]]))) {
       Instance.list[[i]]$alias <- Instance.list[[i]]$FUN
+    }
+  }
+  for (i in 1:length(Algorithm.list)){
+    if (!("alias" %in% names(Algorithm.list[[i]]))) {
+      Algorithm.list[[i]]$alias <- Algorithm.list[[i]]$FUN
     }
   }
 
@@ -283,18 +291,17 @@ run_experiment <- function(Instance.list,    # instance parameters
   cat("\n-----------------------------")
 
   # Initialize output structures
-  data.raw <- data.frame(Algorithm    = character(0),
-                         Instance     = character(0),
-                         Observation  = numeric(0))
-  data.summary <- data.frame(Instance = character(0),
-                             phi.j    = numeric(0),
-                             std.err  = numeric(0),
-                             n1j      = numeric(0),
-                             n2j      = numeric(0))
+  # data.raw <- data.frame(Algorithm    = character(0),
+  #                        Instance     = character(0),
+  #                        Observation  = numeric(0))
+  # data.summary <- data.frame(Instance = character(0),
+  #                            phi.j    = numeric(0),
+  #                            std.err  = numeric(0),
+  #                            n1j      = numeric(0),
+  #                            n2j      = numeric(0))
 
   # Sample instances
-  my.results <- pbmcapply::pbmclapply(X = Instance.list[1:min(N.star,
-                                                              n.available)],
+  my.results <- pbmcapply::pbmclapply(X = Instance.list[1:min(N.star, n.available)],
                                       FUN            = calc_nreps2,
                                       algorithm1     = Algorithm.list[[1]],
                                       algorithm2     = Algorithm.list[[2]],
@@ -306,8 +313,8 @@ run_experiment <- function(Instance.list,    # instance parameters
                                       boot.R         = boot.R,
                                       force.balanced = force.balanced,
                                       save.to.file   = save.partial.results,
-                                      mc.cores       = ncpus,
-                                      mc.preschedule = FALSE)
+                                      folder         = folder,
+                                      mc.cores       = ncpus)
 
   # Consolidate raw data
   data.raw <- lapply(X   = seq(length(my.results)),

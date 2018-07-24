@@ -1,8 +1,8 @@
 Package: CAISEr
 Type: Package
 Title: Comparison of Algorithms with Iterative Sample Size Estimation
-Version: 0.3.0
-Date: 2018-06-15
+Version: 0.3.3
+Date: 2018-07-23
 Authors@R: c(person("Felipe", "Campelo", email = "fcampelo@ufmg.br",
                     role = c("aut", "cre")),
                 person("Fernanda", "Takahashi", email = "fernandact@ufmg.br",
@@ -14,15 +14,16 @@ License: GPL-2
 Depends: R (>= 3.4.0),
 Imports: assertthat (>= 0.1), parallel (>= 3.5.0), pbmcapply (>= 1.2.5)
 Suggests: MOEADr, smoof, knitr, rmarkdown, car, dplyr, ggplot2,
-        ggridges
+        ggridges, pkgdown
 LazyData: TRUE
 Encoding: UTF-8
 RoxygenNote: 6.0.1
 VignetteBuilder: knitr
-URL: https://github.com/fcampelo/CAISEr
+URL: https://fcampelo.github.io/CAISEr/
+BugReports: https://github.com/fcampelo/CAISEr/issues
 NeedsCompilation: no
-Packaged: 2018-06-18 23:53:46 UTC; fcampelo
+Packaged: 2018-07-24 03:34:31 UTC; fcampelo
 Author: Felipe Campelo [aut, cre],
   Fernanda Takahashi [aut]
 Repository: CRAN
-Date/Publication: 2018-06-19 04:48:17 UTC
+Date/Publication: 2018-07-24 04:10:40 UTC
