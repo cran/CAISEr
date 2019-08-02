@@ -1,9 +1,17 @@
+# CAISEr 1.0.14
+* CAISEr plotting now returns a list of ggplot objects and relevant dataframes, and plots a nested plot of relevant information.
+* fixed bug when running experiment with two algorithms (due to 
+the default `drop = TRUE` when subsetting rows in `se_param()`/`se_boot()`).
+
+# CAISEr 1.0.6
+* Added plot function to class `CAISEr`
+
 # CAISEr 1.0.5
 * Major update: package can now deal with comparisons of multiple (>2) algorithms. 
 This version is **not** backward compatible with versions 0.xx. To use the previous versions (e.g., to replicate the results from the paper "Sample Size Estimation 
 for Power and Accuracy in the Experimental Comparison of Algorithms", Journal of 
 Heuristics 2019), install the previous version from 
-[https://cran.r-project.org/src/contrib/CAISEr_0.3.3.tar.gz](https://cran.r-project.org/src/contrib/CAISEr_0.3.3.tar.gz).
+**https://cran.r-project.org/src/contrib/CAISEr_0.3.3.tar.gz**.
 * Replaced function `calc_nreps2()` by `calc_nreps()` to calculate the number of
 repetitions in the case of multiple (>2) algorithms. 
 * function `calc_se()` now performs point estimate and standard error 

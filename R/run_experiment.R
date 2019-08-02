@@ -209,7 +209,7 @@
 #'
 #' # Take a look at the results
 #' summary(my.results)
-#' print(my.results)
+#' plot(my.results)
 #'
 
 run_experiment <- function(instances, algorithms, d, se.max,
@@ -339,7 +339,8 @@ run_experiment <- function(instances, algorithms, d, se.max,
                                         save.folder    = save.partial.results,
                                         load.folder    = load.partial.results,
                                         # other arguments for pbmclapply:
-                                        mc.cores       = ncpus)
+                                        mc.cores       = ncpus,
+                                        mc.preschedule = FALSE)
   } else {
     my.results <- lapply(X   = instances[1:inst.to.use],
                          FUN = calc_nreps,
