@@ -117,6 +117,9 @@ algorithms <- list(list(FUN   = "myalgo",
 ## ---- echo=FALSE---------------------------------------------------------
 load("../inst/extdata/vignette_results.RData")
 
+## ---- fig.align="center", fig.width=8, fig.height=8----------------------
+plot(my.results)
+
 ## ---- fig.align="center", fig.width=6, fig.height=10---------------------
 suppressPackageStartupMessages(library(car))
 
