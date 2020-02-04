@@ -1,4 +1,4 @@
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 suppressPackageStartupMessages(library(smoof))
 suppressPackageStartupMessages(library(MOEADr))
 suppressPackageStartupMessages(library(CAISEr))
@@ -22,7 +22,7 @@ for (i in 1:nrow(allfuns)){
                     id = as.numeric(strsplit(allfuns[i, 1], "_")[[1]][2])))
 }
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 # Prepare algorithm function to be used in run_experiment():
 myalgo <- function(type, instance){
   # Input parameters:
@@ -76,7 +76,7 @@ myalgo <- function(type, instance){
   return(list(value = IGD))
 }
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 # Assemble Algorithm.list. Notice that we need to provide an alias for each 
 # method, since both algorithms have the same '$FUN' argument.
 algorithms <- list(list(FUN   = "myalgo", 
@@ -92,7 +92,7 @@ algorithms <- list(list(FUN   = "myalgo",
                         alias = "MOEAD-DE2", 
                         type  = "moead.de2"))
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 #  my.results <- run_experiment(instances  = instances,
 #                               algorithms = algorithms,
 #                               power = 0.8,      # Desired power: 80%
@@ -114,13 +114,13 @@ algorithms <- list(list(FUN   = "myalgo",
 #                               # NOTICE: Using all but 1 cores. Change if needed
 #                               ncpus  = parallel::detectCores() - 1)
 
-## ---- echo=FALSE---------------------------------------------------------
+## ---- echo=FALSE--------------------------------------------------------------
 load("../inst/extdata/vignette_results.RData")
 
-## ---- fig.align="center", fig.width=8, fig.height=8----------------------
+## ---- fig.align="center", fig.width=8, fig.height=8---------------------------
 plot(my.results)
 
-## ---- fig.align="center", fig.width=6, fig.height=10---------------------
+## ---- fig.align="center", fig.width=6, fig.height=10--------------------------
 suppressPackageStartupMessages(library(car))
 
 algopairs <- paste(my.results$data.summary$Alg1, 
@@ -136,7 +136,7 @@ for (i in seq_along(unique(algopairs))){
 }
 par(mfrow = c(1, 1))
 
-## ---- fig.align="center", fig.width=6, fig.height=8----------------------
+## ---- fig.align="center", fig.width=6, fig.height=8---------------------------
 par(mfrow = c(3, 2))
 for (i in seq_along(unique(algopairs))){
   tmp <- my.results$data.summary[algopairs == unique(algopairs)[i], ]
@@ -145,7 +145,7 @@ for (i in seq_along(unique(algopairs))){
 }
 par(mfrow = c(1, 1))
 
-## ---- fig.align="center", fig.width=6, fig.height=4----------------------
+## ---- fig.align="center", fig.width=6, fig.height=4---------------------------
 df <- cbind(Comparison = algopairs, my.results$data.summary)
 
 suppressPackageStartupMessages(library(ggplot2))
@@ -160,7 +160,7 @@ mp +
   ylab("Percent difference in IGD") + xlab("") + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-## ---- fig.align="center", fig.width=6, fig.height=8----------------------
+## ---- fig.align="center", fig.width=6, fig.height=8---------------------------
 ggplot(df, aes(x = Instance, y = Phi, colour = Comparison,
                      ymin = Phi - SE, ymax = Phi + SE)) + 
   geom_pointrange(show.legend = FALSE) + 
@@ -169,6 +169,6 @@ ggplot(df, aes(x = Instance, y = Phi, colour = Comparison,
   theme(axis.text.x = element_text(angle = 60, hjust = 1)) + 
   xlab("")
 
-## ---- fig.align="center", fig.width=6, fig.height=8----------------------
+## ---- fig.align="center", fig.width=6, fig.height=8---------------------------
 summary(my.results, test = "wilcoxon")
 
