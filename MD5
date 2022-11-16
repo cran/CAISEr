@@ -1,6 +1,6 @@
-5eafd86dc09342ba39faa1014f2743ab *DESCRIPTION
+0e915d5ef32bd055d7f2bd0c47a911a0 *DESCRIPTION
 ae541cca338a805b8e11b4dec45e42cf *NAMESPACE
-ecff8f6958e2571874eeeefa195dbbbf *NEWS.md
+7e3c4d6e8a8b8a73bd7681aef60b4696 *NEWS.md
 6328bac7e97cf88d98db10f778ec4c24 *R/TSP_dist.R
 6bb8db388c628d08ae41e0055c942683 *R/boot_sdm.R
 11b6d3a72de95201f153962a9375d291 *R/calc_instances.R
@@ -22,10 +22,10 @@ ee3ebfb34e2e57c9dffbedd623a1be60 *R/se_param.R
 e618b092c77fd21cd65c42ebc53fc53a *R/summary_nreps.R
 ba830fe95cb70e0ccec70b0c5737d061 *R/zzzz_oldfuns.R
 2fbb6f7c43c58d1169ec5d07426c2470 *README.md
-de3fd4f5a46f73b47f7882e3a3375fc3 *build/vignette.rds
-b89089f93e8f6d588aeb6d45e1ab9698 *inst/doc/Adapting_Algorithm_for_CAISEr.R
-42ddd809987d1cc6d0374f8309b88bae *inst/doc/Adapting_Algorithm_for_CAISEr.Rmd
-95ea47774018c3304bd6e722f744ef88 *inst/doc/Adapting_Algorithm_for_CAISEr.html
+e0a3e7a1936f3ba247bd6c163e39154a *build/vignette.rds
+91f919bacacc7f9ae63ea8dcd0ac6c9d *inst/doc/Adapting_Algorithm_for_CAISEr.R
+96d3b85147a20608ce46d45f42359ef6 *inst/doc/Adapting_Algorithm_for_CAISEr.Rmd
+0a246e4b8aa87d2932c9f3326058a77f *inst/doc/Adapting_Algorithm_for_CAISEr.html
 2584919d123160cedf26552ae83d8690 *inst/extdata/pf_data/UF1.dat
 5b06c60a08f39dd1e5c5f71b723519cc *inst/extdata/pf_data/UF10.dat
 2584919d123160cedf26552ae83d8690 *inst/extdata/pf_data/UF2.dat
@@ -55,4 +55,4 @@ bec4fb4098ebdae66d7a3461f2bca1b5 *man/se_boot.Rd
 378ac28d16a8e754cd2058c85c4021c0 *man/se_param.Rd
 74e8da10c51bcbd1b30ad8fe743e6e36 *man/summary.CAISEr.Rd
 88e80337c06a44c929dac32ba9f21e9c *man/summary.nreps.Rd
-42ddd809987d1cc6d0374f8309b88bae *vignettes/Adapting_Algorithm_for_CAISEr.Rmd
+96d3b85147a20608ce46d45f42359ef6 *vignettes/Adapting_Algorithm_for_CAISEr.Rmd

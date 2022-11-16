@@ -1,96 +1,103 @@
-## -----------------------------------------------------------------------------
+## ---- echo=FALSE--------------------------------------------------------------
 suppressPackageStartupMessages(library(smoof))
-suppressPackageStartupMessages(library(MOEADr))
 suppressPackageStartupMessages(library(CAISEr))
 
-### Build function names (instances: UF1 - UF7, dimensions 10 - 40)
-fname   <- paste0("UF_", 1:7)
-dims    <- c(10:40)
-allfuns <- expand.grid(fname, dims, stringsAsFactors = FALSE)
+## ---- eval=FALSE--------------------------------------------------------------
+#  # Install if needed
+#  # devtools::install_github("fcampelo/MOEADr")
+#  
+#  suppressPackageStartupMessages(library(smoof))
+#  suppressPackageStartupMessages(library(MOEADr))
+#  suppressPackageStartupMessages(library(CAISEr))
+#  
+#  ### Build function names (instances: UF1 - UF7, dimensions 10 - 40)
+#  fname   <- paste0("UF_", 1:7)
+#  dims    <- c(10:40)
+#  allfuns <- expand.grid(fname, dims, stringsAsFactors = FALSE)
+#  
+#  # Assemble instances list
+#  instances <- vector(nrow(allfuns), mode = "list")
+#  for (i in 1:length(instances)){
+#    instances[[i]]$FUN <- paste0(allfuns[i,1], "_", allfuns[i,2])
+#  }
+#  
+#  ### Build the functions listed above (so that they can be properly used)
+#  for (i in 1:nrow(allfuns)){
+#    assign(x = instances[[i]]$FUN,
+#       value = MOEADr::make_vectorized_smoof(prob.name  = "UF",
+#                      dimensions = allfuns[i, 2],
+#                      id = as.numeric(strsplit(allfuns[i, 1], "_")[[1]][2])))
+#  }
 
-# Assemble instances list
-instances <- vector(nrow(allfuns), mode = "list")
-for (i in 1:length(instances)){
-  instances[[i]]$FUN <- paste0(allfuns[i,1], "_", allfuns[i,2])
-}
+## ---- eval=FALSE--------------------------------------------------------------
+#  # Prepare algorithm function to be used in run_experiment():
+#  myalgo <- function(type, instance){
+#    # Input parameters:
+#    #     - type (variant to use: "original", "original2", "moead.de" or "moead.de2")
+#    #     - instance (instance to be solved, e.g., instance = instances[[i]])
+#    # All other parameters are set internally
+#  
+#    ## Extract instance information to build the MOEADr problem format
+#    fdef  <- unlist(strsplit(instance$FUN, split = "_"))
+#    uffun <- smoof::makeUFFunction(dimensions = as.numeric(fdef[3]),
+#                                   id         = as.numeric(fdef[2]))
+#    fattr    <- attr(uffun, "par.set")
+#    prob.dim <- fattr$pars$x$len
+#  
+#    ## Build MOEADr problem list
+#    problem <- list(name = instance$FUN,
+#                    xmin = fattr$pars$x$lower,
+#                    xmax = fattr$pars$x$upper,
+#                    m    = attr(uffun, "n.objectives"))
+#  
+#    ## Load presets for the algorithm provided in input 'type' and
+#    ## modify whatever is needed for this particular experiment
+#    de2 <- FALSE
+#    if (type == "moead.de2"){
+#      de2  <- TRUE
+#      type <- "moead.de"
+#    }
+#    algo.preset <- MOEADr::preset_moead(type)
+#    algo.preset$decomp$H <- 99 # <-- set population size
+#    algo.preset$stopcrit[[1]]$name <- "maxeval" # <-- type of stop criterion
+#    algo.preset$stopcrit[[1]]$maxeval <- 2000 * prob.dim # stop crit.
+#    poly.ind <- which(sapply(algo.preset$variation,
+#                             function(x){x$name == "polymut"}))
+#    algo.preset$variation[[poly.ind]]$pm <- 1 / prob.dim # <--- pm = 1/d
+#    if (de2){
+#      algo.preset$aggfun$name <- "pbi"
+#      algo.preset$aggfun$theta <- 5
+#      algo.preset$neighbors$name = "x"
+#    }
+#  
+#    ## Run algorithm on "instance"
+#    out <- MOEADr::moead(preset = algo.preset, problem = problem,
+#                         showpars = list(show.iters = "none"))
+#  
+#    ## Read reference data to calculate the IGD
+#    Yref  <- as.matrix(read.table(paste0("./inst/extdata/pf_data/",
+#                                         fdef[1], fdef[2], ".dat")))
+#    IGD = MOEADr::calcIGD(Y = out$Y, Yref = Yref)
+#  
+#    ## Return IGD as field "value" in the output list
+#    return(list(value = IGD))
+#  }
 
-### Build the functions listed above (so that they can be properly used)
-for (i in 1:nrow(allfuns)){
-  assign(x = instances[[i]]$FUN,
-     value = MOEADr::make_vectorized_smoof(prob.name  = "UF",
-                    dimensions = allfuns[i, 2],
-                    id = as.numeric(strsplit(allfuns[i, 1], "_")[[1]][2])))
-}
-
-## -----------------------------------------------------------------------------
-# Prepare algorithm function to be used in run_experiment():
-myalgo <- function(type, instance){
-  # Input parameters:
-  #     - type (variant to use: "original", "original2", "moead.de" or "moead.de2")
-  #     - instance (instance to be solved, e.g., instance = instances[[i]])
-  # All other parameters are set internally
-
-  ## Extract instance information to build the MOEADr problem format
-  fdef  <- unlist(strsplit(instance$FUN, split = "_"))
-  uffun <- smoof::makeUFFunction(dimensions = as.numeric(fdef[3]),
-                                 id         = as.numeric(fdef[2]))
-  fattr    <- attr(uffun, "par.set")
-  prob.dim <- fattr$pars$x$len
-  
-  ## Build MOEADr problem list
-  problem <- list(name = instance$FUN,
-                  xmin = fattr$pars$x$lower,
-                  xmax = fattr$pars$x$upper,
-                  m    = attr(uffun, "n.objectives"))
-
-  ## Load presets for the algorithm provided in input 'type' and 
-  ## modify whatever is needed for this particular experiment
-  de2 <- FALSE
-  if (type == "moead.de2"){
-    de2  <- TRUE
-    type <- "moead.de"
-  }
-  algo.preset <- MOEADr::preset_moead(type)
-  algo.preset$decomp$H <- 99 # <-- set population size
-  algo.preset$stopcrit[[1]]$name <- "maxeval" # <-- type of stop criterion
-  algo.preset$stopcrit[[1]]$maxeval <- 2000 * prob.dim # stop crit.
-  poly.ind <- which(sapply(algo.preset$variation,
-                           function(x){x$name == "polymut"}))
-  algo.preset$variation[[poly.ind]]$pm <- 1 / prob.dim # <--- pm = 1/d
-  if (de2){
-    algo.preset$aggfun$name <- "pbi"
-    algo.preset$aggfun$theta <- 5
-    algo.preset$neighbors$name = "x"
-  }
-  
-  ## Run algorithm on "instance"
-  out <- MOEADr::moead(preset = algo.preset, problem = problem,
-                       showpars = list(show.iters = "none"))
-
-  ## Read reference data to calculate the IGD
-  Yref  <- as.matrix(read.table(paste0("./inst/extdata/pf_data/",
-                                       fdef[1], fdef[2], ".dat")))
-  IGD = MOEADr::calcIGD(Y = out$Y, Yref = Yref)
-
-  ## Return IGD as field "value" in the output list
-  return(list(value = IGD))
-}
-
-## -----------------------------------------------------------------------------
-# Assemble Algorithm.list. Notice that we need to provide an alias for each 
-# method, since both algorithms have the same '$FUN' argument.
-algorithms <- list(list(FUN   = "myalgo", 
-                        alias = "Original 1", 
-                        type  = "original"),
-                   list(FUN   = "myalgo", 
-                        alias = "Original 2", 
-                        type  = "original2"),
-                   list(FUN   = "myalgo", 
-                        alias = "MOEAD-DE", 
-                        type  = "moead.de"),
-                   list(FUN   = "myalgo", 
-                        alias = "MOEAD-DE2", 
-                        type  = "moead.de2"))
+## ---- eval=FALSE--------------------------------------------------------------
+#  # Assemble Algorithm.list. Notice that we need to provide an alias for each
+#  # method, since both algorithms have the same '$FUN' argument.
+#  algorithms <- list(list(FUN   = "myalgo",
+#                          alias = "Original 1",
+#                          type  = "original"),
+#                     list(FUN   = "myalgo",
+#                          alias = "Original 2",
+#                          type  = "original2"),
+#                     list(FUN   = "myalgo",
+#                          alias = "MOEAD-DE",
+#                          type  = "moead.de"),
+#                     list(FUN   = "myalgo",
+#                          alias = "MOEAD-DE2",
+#                          type  = "moead.de2"))
 
 ## ---- eval=FALSE--------------------------------------------------------------
 #  my.results <- run_experiment(instances  = instances,
